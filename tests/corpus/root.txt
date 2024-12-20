@@ -1,0 +1,13 @@
+<.gitignore>
+/*.txt
+</.gitignore>
+T: 'test.txt'
+
+<.gitignore>
+/*.txt
+/foo
+</.gitignore>
+T: 'test.txt'
+T: 'foo/test.txt'
+T: 'foo'
+F: 'bar/foo'

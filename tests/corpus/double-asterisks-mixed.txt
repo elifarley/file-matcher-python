@@ -1,0 +1,14 @@
+<.gitignore>
+**/foo
+foo*
+</.gitignore>
+# ---------------------------------------
+# Combine partial vs. whole segment plus double star
+# ---------------------------------------
+T: 'foo'                             # second pattern => partial "foo" is exact => ignoring
+T: 'foobar'                          # second pattern => "foo*" => ignoring
+T: 'food'
+F: 'xfood'
+T: 'somewhere/foo'                   # first pattern => component "foo"
+T: 'somewhere/foo/bar'
+T: 'somewhere/fooder/bar'

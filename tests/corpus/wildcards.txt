@@ -1,0 +1,17 @@
+<.gitignore>
+log.*
+</.gitignore>
+F: 'alog.txt'
+T: 'log.txt'
+T: 'a/log.txt'
+T: 'a/b/log.txt'
+T: 'log.123'
+T: 'log.123/'
+T: 'log.123/a'
+
+<.gitignore>
+file?.txt
+</.gitignore>
+T: 'file1.txt'
+F: 'fileab.txt'
+F: 'file.txt'

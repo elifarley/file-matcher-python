@@ -1,0 +1,36 @@
+<.gitignore>
+[!a]uild
+</.gitignore>
+T: 'build'
+T: 'build/'
+T: 'build/inside'
+T: 'build/inside/'
+T: 'other/build'
+T: 'other/build/'
+T: 'other/build/inside'
+T: 'other/build/inside/'
+T: 'other/a/build'
+
+<.gitignore>
+[!a]uild
+</.gitignore>
+F: 'buildx'
+F: 'buildx/'
+F: 'buildx/inside'
+F: 'buildx/inside/'
+F: 'other/buildx'
+F: 'other/buildx/'
+F: 'other/buildx/inside'
+F: 'other/buildx/inside/'
+
+<.gitignore>
+[!a]uild
+</.gitignore>
+F: 'xbuild'
+F: 'xbuild/'
+F: 'xbuild/inside'
+F: 'xbuild/inside/'
+F: 'other/xbuild'
+F: 'other/xbuild/'
+F: 'other/xbuild/inside'
+F: 'other/xbuild/inside/'

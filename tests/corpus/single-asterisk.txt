@@ -1,0 +1,56 @@
+<.gitignore>
+*/build
+</.gitignore>
+F: 'build'
+F: 'build/'
+F: 'build/inside'
+F: 'build/inside/'
+T: 'other/build'
+T: 'other/build/'
+T: 'other/build/inside'
+T: 'other/build/inside/'
+F: 'foo/other/build/inside'
+F: 'foo/other/build/inside/'
+
+<.gitignore>
+*/build/
+</.gitignore>
+F: 'build'
+F: 'build/'
+F: 'build/inside'
+F: 'build/inside/'
+F: 'other/build'
+T: 'other/build/'
+T: 'other/build/inside'
+T: 'other/build/inside/'
+F: 'foo/other/build/inside'
+F: 'foo/other/build/inside/'
+
+<.gitignore>
+*.txt
+</.gitignore>
+T: '.txt'
+T: 'aaa.txt'
+T: 'a/b/a.txt'
+T: 'a/b/a.txt/'
+T: 'a/b/a.txt/a'
+
+<.gitignore>
+# ---------------------------------------
+# Single asterisk in the middle
+# ---------------------------------------
+abc/*/xyz
+</.gitignore>
+F: 'abc/xyz'                    # direct => abc/xyz
+F: 'abc/xyz/1'
+T: 'abc/1/xyz/1'
+T: 'abc/def/xyz'
+F: 'abc/def/xyzX'           # partial mismatch => "xyzX" != "xyz"
+F: 'abc/d/e/f/xyz'
+F: 'abcd/xyz'
+F: '1/abc/d/e/f/xyz'
+F: '1/abc/xyz'
+F: 'abc'                           # no "xyz" segment
+F: 'xyz'                           # doesn't start with 'abc'
+F: 'somewhere/abc/xyz'
+F: 'abc/deep/nested/xyz'

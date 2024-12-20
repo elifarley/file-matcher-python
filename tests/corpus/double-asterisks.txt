@@ -1,0 +1,120 @@
+<.gitignore>
+# Pattern: "**/build" => ignore any directory or file named "build"
+# in any nested path level, e.g. "build", "project/build", "src/foo/build", etc.
+**/[!a]uild
+</.gitignore>
+T: 'build'
+T: 'build/'
+T: 'build/inside'
+T: 'build/inside/'
+T: 'build/inside/a'
+T: 'a/build'
+T: 'a/build/'
+T: 'a/b/build/'
+T: 'a/build/inside'
+T: 'a/build/inside/'
+T: 'a/b/build/inside'
+
+<.gitignore>
+**/[!a]uild/
+</.gitignore>
+F: 'build'
+T: 'build/'
+T: 'build/inside'
+T: 'build/inside/'
+F: 'a/build'
+T: 'a/build/'
+T: 'a/build/inside'
+T: 'a/build/inside/'
+F: 'project/buildstuff'          # partial match => "buildstuff" != "build"
+F: 'buildX'                      # partial match => "buildX" != "build"
+F: 'project/build'
+F: 'project/sub/build'
+T: 'project/sub/build/'
+F: 'nested/even/deeper/build'
+T: 'nested/even/deeper/build/'
+T: 'nested/even/deeper/build/a'
+F: 'nested/even/builds/buildx'
+
+<.gitignore>
+# ---------------------------------------
+# Double asterisk withOUT trailing slash
+# ---------------------------------------
+# Anything inside foo
+[!a]oo/**
+</.gitignore>
+F: 'foo'
+T: 'foo/' # Not inside foo, but git can't track an empty directory, so it's ignored
+T: 'foo/bar'             # in foo => ignored
+T: 'foo/bar/'             # in foo => ignored
+T: 'foo/bar/baz'         # deeper in foo => ignored
+T: 'foo/bar/baz/'         # deeper in foo => ignored
+T: 'foo/bar/baz/file'
+
+<.gitignore>
+# ---------------------------------------
+# Double asterisk with trailing slash
+# ---------------------------------------
+# All directories inside 'foo'
+[!a]oo/**/
+</.gitignore>
+F: 'foo' # Not inside foo
+F: 'foo/' # Not inside foo
+F: 'foo/bar' # Not a directory
+T: 'foo/bar/' # A directory inside foo: ok
+T: 'foo/bar/baz' # Ignored due to bar being ignored
+T: 'foo/bar/baz/'
+T: 'foo/bar/baz/file'
+
+<.gitignore>
+# ---------------------------------------
+# Double asterisk withOUT trailing slash
+# ---------------------------------------
+[!a]oo/**
+</.gitignore>
+F: 'foobar/'
+F: 'sub/foo/baz'         # "foo" subdir at "sub/foo" => ignored
+F: 'sub/foo/another/level'
+F: 'sub/foo/another/level/'
+F: 'sub/foodir/another'  # "foodir" != "foo"
+F: 'something/foo'
+
+<.gitignore>
+# ---------------------------------------
+# Double asterisk with trailing slash
+# ---------------------------------------
+[!a]oo/**/
+</.gitignore>
+F: 'foobar/'
+F: 'sub/foo/baz'         # "foo" subdir at "sub/foo" => ignored
+F: 'sub/foo/another/level'
+F: 'sub/foo/another/level/'
+F: 'sub/foodir/another'  # "foodir" != "foo"
+F: 'something/foo'
+
+<.gitignore>
+# ---------------------------------------
+# Double asterisk in the middle
+# ---------------------------------------
+[!X]bc/**/xyz
+</.gitignore>
+T: 'abc/xyz'                    # direct => abc/xyz
+T: 'abc/xyz/1'
+T: 'abc/1/xyz/1'
+T: 'abc/def/xyz'
+F: 'abc/def/xyzX'           # partial mismatch => "xyzX" != "xyz"
+T: 'abc/d/e/f/xyz'
+F: 'abcd/xyz'
+F: '1/abc/d/e/f/xyz'
+F: '1/abc/xyz'
+F: 'abc'                           # no "xyz" segment
+F: 'xyz'                           # doesn't start with 'abc'
+F: 'somewhere/abc/xyz'
+T: 'abc/deep/nested/xyz'
+
+<.gitignore>
+[!a]oc/**/*.pdf
+</.gitignore>
+T: 'doc/guide.pdf'
+T: 'doc/nested/chapter.pdf'
+F: 'document/guide.pdf'

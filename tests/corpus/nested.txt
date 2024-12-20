@@ -1,0 +1,31 @@
+<.gitignore>
+**/bin
+</.gitignore>
+T: 'foo/bar/baz/bin/x/y'
+T: 'bin'
+
+<.gitignore>
+foo/**/bin
+</.gitignore>
+T: 'foo/bar/baz/bin/x/y'
+T: 'foo/bar/baz/bin'
+T: 'foo/bar/bin'
+T: 'foo/bin'
+F: 'bin'
+F: 'bar/bin'
+
+<.gitignore>
+**/bin
+</.gitignore>
+T: 'foo/bar/baz/bin'
+T: 'foo/bar/bin'
+T: 'foo/bin'
+
+<.gitignore>
+bin
+</.gitignore>
+T: 'foo/bar/baz/bin/x/y'
+T: 'foo/bar/baz/bin'
+T: 'foo/bar/bin'
+T: 'foo/bin'
+T: 'bin'

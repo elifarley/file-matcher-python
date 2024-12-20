@@ -1,0 +1,120 @@
+<.gitignore>
+# Ignore all dotfiles
+.*
+# except .gitignore itself
+!.gitignore
+</.gitignore>
+F: '.gitignore'
+F: 'config'
+F: 'file.txt'
+T: '.env'
+T: '.bashrc'
+T: '.config'
+
+<.gitignore>
+/[!a]ode*modules
+!/[!b]ode*modules/important
+</.gitignore>
+T: 'node-modules/important'
+T: 'node-modules/important/'
+T: 'node-modules'
+T: 'node-modules/'
+T: 'node-modules/a/b'
+T: 'node-modules/a/b/'
+T: 'node-modules/package.json'
+T: 'node-modules/package.json/'
+
+<.gitignore>
+/[!a]ode-modules
+!/[!b]ode-modules/important
+</.gitignore>
+T: 'node-modules/important'
+T: 'node-modules/important/'
+T: 'node-modules'
+T: 'node-modules/'
+T: 'node-modules/a/b'
+T: 'node-modules/a/b/'
+T: 'node-modules/package.json'
+T: 'node-modules/package.json/'
+
+<.gitignore>
+# Ignore all text files
+*.txt
+
+# But keep 2.txt (last wins if it wasn't ignored by a directory)
+!2.txt
+</.gitignore>
+T: '1.txt'
+F: '2.txt' # First pattern says ignore, second says unignore => final expected: not ignored
+
+<.gitignore>
+# Keep 2.txt
+!2.txt
+
+# Ignore all text files.
+*.txt
+</.gitignore>
+T: '1.txt'
+T: '2.txt' # Last rule (*.txt) also matches 2.log, so we test the "last match wins" logic
+
+<.gitignore>
+# ======================
+# Combined Named Negations
+# Mix explicit filenames (debug.log) and wildcard patterns.
+# "special.log" is re-ignored in subfolders with !**/special.log pattern to test directory scope.
+# ======================
+# Ignore all .log files
+*.log
+# Unignore 'important.log' specifically
+!important.log
+# Directly ignore 'debug.log' file by exact pattern
+debug.log
+# Negate ignoring for any 'special.log' anywhere in subdirs (i.e. re-unignore it)
+!**/special.log
+</.gitignore>
+T: 'app.log'       # ignored by '*.log'
+F: 'important.log' # unignored by '!important.log'
+T: 'debug.log' # explicitly ignored by 'debug.log'
+F: 'logs/special.log' # unignored by '!**/special.log'
+T: 'another/app.log' # ignored by '*.log'
+F: 'another/special.log' # unignored by '!**/special.log'
+
+
+<.gitignore>
+# ======================
+# Advanced Negation & Anchored Patterns
+# Demonstrates anchored patterns, directories, and multiple negation layers.
+# We test directory handling, anchored patterns, and negation layering:
+# ======================
+
+# ignore top-level "build" directory
+/build
+# unignore a specific file inside that directory
+!/build/allow.log
+
+!/dist/allow.log
+/dist
+
+# ignore all .tmp files
+*.tmp
+# unignore a specific top-level file
+!/global.tmp
+
+# ignore all .log
+*.log
+# unignore only *.critical.log
+!*.critical.log
+</.gitignore>
+T: 'build' # is a directory matching /build => ignored
+T: 'build/allow.log' unignored, but was first ignored by dir, so still matches
+T: 'build/subdir/file.txt' # inside build => ignored
+T: 'dist'
+T: 'dist/allow.log'
+F: 'global.tmp' # unignored by !/global.tmp
+T: 'random.tmp' # ignored by '*.tmp'
+T: 'some/dir/random.tmp' # also ignored by '*.tmp'
+T: 'system.log' # ignored by '*.log'
+F: 'kernel.critical.log' # unignored by !*.critical.log
+F: 'really.critical.log' # unignored by !*.critical.log
+F: 'nested/dir/another.critical.log' # unignored by !*.critical.log
+T: 'nested/dir/another.debug.log' # still ignored by '*.log'

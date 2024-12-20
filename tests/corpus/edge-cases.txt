@@ -1,0 +1,18 @@
+<.gitignore>
+  ignore_me.txt
+</.gitignore>
+T: '  ignore_me.txt'
+
+<.gitignore>
+/
+</.gitignore>
+# Typically, "/" means ignoring everything at root, but this can behave oddly
+F: 'file.txt'
+F: 'folder/subfile'
+F: '.env'
+F: 'any/thing/at/all'
+
+<.gitignore>
+\!notfile
+</.gitignore>
+T: '!notfile'

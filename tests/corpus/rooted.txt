@@ -1,0 +1,8 @@
+<.gitignore>
+/README.md
+/src/config.ini
+</.gitignore>
+T: 'README.md'
+F: 'docs/README.md'
+T: 'src/config.ini'
+F: 'src/utils/config.ini'

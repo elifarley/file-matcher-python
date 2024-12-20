@@ -1,0 +1,29 @@
+<.gitignore>
+*.py[co]
+!important.pyc
+build/
+dir-or-file
+/node-modules
+temp/**
+C:/Windows/*
+**/bin
+logs/*.log
+!logs/important.log
+Debug/*/obj
+</.gitignore>
+T: 'test.pyc'
+F: 'important.pyc'
+T: 'build/output.txt/'
+T: 'build/'
+T: 'node-modules/package.json/'
+F: 'sub/node-modules/file.txt'
+T: 'temp/a/b/c/file.txt'
+T: 'logs/debug.log'
+F: 'logs/important.log'
+T: 'Debug/Project1/obj/file.txt'
+T: 'src/bin/executable'
+T: 'Project/Debug/bin/test.exe'
+T: 'temp/subdir/file.txt'
+T: 'node-modules/package.json/'
+T: 'logs/error.log'
+F: 'logs/important.log'

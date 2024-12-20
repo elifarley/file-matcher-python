@@ -1,0 +1,19 @@
+<.gitignore>
+[a-c]uild/*
+</.gitignore>
+F: 'build'
+T: 'build/'
+T: 'build/inside'
+T: 'build/inside/'
+T: 'build/inside/a'
+T: 'build/inside/a/'
+
+<.gitignore>
+[!a]uild/*
+</.gitignore>
+F: 'other/build'
+F: 'other/build/'
+F: 'other/build/inside'
+F: 'other/build/inside/'
+F: 'other/build/inside/a'
+F: 'other/build/inside/a/'

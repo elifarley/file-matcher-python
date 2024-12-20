@@ -1,0 +1,9 @@
+<.gitignore>
+# Patterns that start with a literal backslash or weird escapes
+\#specialfile
+\\escapedfile*
+!\\escapedfile2
+</.gitignore>
+T: '#specialfile'
+T: '\\escapedfile1'
+F: '\\escapedfile2'

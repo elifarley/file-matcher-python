@@ -1,0 +1,35 @@
+# ---------------------------------------
+# This file specifically tests different 'base' parameters,
+# making sure patterns are interpreted relative to those base paths.
+# ---------------------------------------
+
+<.gitignore>
+output/
+secret.env
+</.gitignore>
+F: 'output'
+T: 'output/result.txt'
+F: 'test_output/result.txt'   # Not exactly 'output' folder
+T: 'project/output/log.txt'
+T: 'secret.env'
+T: 'config/secret.env'
+
+# BLOCK 2: A subdirectory base
+<.gitignore base='subdir'>
+# Anchored pattern => from subdir/
+# ignore the logs folder in subdir only
+/logs
+</.gitignore>
+T: 'subdir/logs/error.log'           # matches anchored => ignored
+F: 'logs/error.log'                  # outside subdir => not ignored
+F: 'subdir/nested/logs/error.log'    # deeper => won't match anchored /logs
+T: 'subdir/logs'                     # ignoring the folder itself
+
+# BLOCK 3: "nested" base parameter
+<.gitignore base='parent/child'>
+# Only ignore files named "childfile" at that exact level
+childfile
+</.gitignore>
+T: 'parent/child/childfile'
+F: 'parent/child/sub/childfile'   # not in the same directory
+F: 'parent/grandchild/childfile'

@@ -1,0 +1,10 @@
+<.gitignore>
+[!a]uild/*
+/[a-z]ode-modules
+!/node-modules/important
+</.gitignore>
+T: 'build/output.txt'
+T: 'build/src/file.js'
+T: 'node-modules/package.json/'
+T: 'node-modules/important'
+F: 'another/build/file.txt'
