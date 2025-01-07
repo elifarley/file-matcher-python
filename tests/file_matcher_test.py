@@ -29,7 +29,7 @@ from pathlib import Path
 from enum import Enum, auto
 from dataclasses import dataclass
 
-from filematcher import get_factory_context, FileMatcherFactory, FileMatcher
+from filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation
 
 # Path to our corpus directory (contains *.txt test files)
 CORPUS_DIR = Path(__file__).parent / "corpus"
@@ -40,7 +40,7 @@ def file_matcher_factory_native(request) -> FileMatcherFactory:
     Provide a single "native" (that is, one that directly calls the git command) FileMatcherFactory instance
     for all tests in the session.
     """
-    factory = get_factory_context(pure_python=False)
+    factory = get_factory(MatcherImplementation.GIT)
     factory.__enter__()
     request.addfinalizer(lambda: factory.__exit__(None, None, None))
     return factory
@@ -52,7 +52,7 @@ def file_matcher_factory_pure_python(request) -> FileMatcherFactory:
 
     This fixture uses a Python-only implementation of the matching logic, which is a lot faster than calling git itself.
     """
-    factory = get_factory_context(pure_python=True)
+    factory = get_factory(MatcherImplementation.PURE_PYTHON)
     factory.__enter__()
     request.addfinalizer(lambda: factory.__exit__(None, None, None))
     return factory
@@ -86,7 +86,7 @@ class TestBlock:
     Represents a block of parsed lines from the corpus file.
     """
     base_dir: str
-    patterns: list[str]
+    patterns: tuple[str, ...]
     test_cases: list[ParsedLine]
 
     def check_matches(self, file_matcher: FileMatcher) -> list[str]:
@@ -120,7 +120,7 @@ def resolve_block(block: list[ParsedLine]) -> TestBlock:
     block_start = block_starts[0]
     base_dir = block_start.base_dir
 
-    patterns = [line.content for line in block if line.type == LineType.PATTERN]
+    patterns = tuple(line.content for line in block if line.type == LineType.PATTERN)
     test_cases = [line for line in block if line.type == LineType.TEST_CASE]
 
     return TestBlock(base_dir=base_dir, patterns=patterns, test_cases=test_cases)

@@ -1,13 +1,22 @@
 from version import __version__
 from functools import cached_property
+from enum import Enum, auto
 
 from .file_matcher_api import FileMatcherFactory, FileMatcher
 from .file_matcher_git import GitNativeMatcherFactory
 from .file_matcher_python import PurePythonMatcherFactory
 
-__all__ = ('get_factory_context', 'FileMatcherFactory', 'FileMatcher')
+__all__ = ('get_factory', 'MatcherImplementation', 'FileMatcherFactory', 'FileMatcher')
 
-class FactoryProvider:
+class MatcherImplementation(Enum):
+    """Defines available matcher implementation types."""
+    PURE_PYTHON = auto()
+    GIT = auto()
+    EXTERNAL_LIB = auto()
+
+class MatcherFactoryRegistry:
+    """Registry maintaining different matcher factory implementations."""
+
     @cached_property
     def git_native_factory(self) -> FileMatcherFactory:
         return GitNativeMatcherFactory()
@@ -16,9 +25,15 @@ class FactoryProvider:
     def pure_python_factory(self) -> FileMatcherFactory:
         return PurePythonMatcherFactory()
 
-    def get_factory(self, pure_python: bool = True) -> FileMatcherFactory:
-        return self.pure_python_factory if pure_python else self.git_native_factory
+    def get_factory(self, matcher_implementation: MatcherImplementation = MatcherImplementation.PURE_PYTHON) -> FileMatcherFactory:
+        if matcher_implementation == MatcherImplementation.PURE_PYTHON:
+            return self.pure_python_factory
 
-_provider = FactoryProvider()
-def get_factory_context(pure_python: bool = True):
-    return _provider.get_factory(pure_python)
+        if matcher_implementation == MatcherImplementation.GIT:
+            return self.git_native_factory
+
+        raise NotImplementedError(str(matcher_implementation))
+
+_registry = MatcherFactoryRegistry()
+def get_factory(matcher_implementation: MatcherImplementation = MatcherImplementation.PURE_PYTHON):
+    return _registry.get_factory(matcher_implementation)

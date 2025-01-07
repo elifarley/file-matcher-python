@@ -1,8 +1,7 @@
 import subprocess
 import os
 import tempfile
-from functools import lru_cache
-from typing import Protocol, NamedTuple, override
+from typing import Protocol, NamedTuple, Iterable, override
 from collections import namedtuple
 from threading import Lock
 from .file_matcher_api import FileMatcherFactory, FileMatcher, FileMatchResult
@@ -57,6 +56,13 @@ class GitNativeMatcherFactory(_GitContext, FileMatcherFactory):
                 subprocess.run(['rm', '-rf', self._temp_dir], check=False)
             except:
                 pass
+
+    @override
+    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+        with self._lock:
+            self._instance_counter += 1
+            instance_id = self._instance_counter
+        return _GitIgnoreNativeMatcher(patterns, instance_id, self)
 
     def cleanup_matcher(self, instance_id: int) -> None:
         if self._temp_dir:
@@ -121,16 +127,3 @@ class GitNativeMatcherFactory(_GitContext, FileMatcherFactory):
                 description = f"Ignored ({e})"
 
         return FileMatchResult(matches, description)
-
-    @override
-    def pattern2matcher(self, patterns: list[str] | tuple[str, ...]) -> FileMatcher:
-        if not isinstance(patterns, tuple):
-            patterns = tuple(patterns)  # make hashable for caching
-        return self._pattern2matcher(patterns)
-
-    @lru_cache(maxsize=128)
-    def _pattern2matcher(self, patterns: tuple[str, ...]) -> _GitIgnoreNativeMatcher:
-        with self._lock:
-            self._instance_counter += 1
-            instance_id = self._instance_counter
-        return _GitIgnoreNativeMatcher(patterns, instance_id, self)

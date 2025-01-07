@@ -6,11 +6,22 @@ import logging
 from dataclasses import dataclass
 from enum import IntFlag, auto
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Generator, Optional, Iterable, override
 from functools import cached_property, lru_cache
 from .file_matcher_api import FileMatcherFactory, FileMatcher, FileMatchResult
 
 logging.basicConfig(level=logging.DEBUG)
+
+class PurePythonMatcherFactory(FileMatcherFactory):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    @override
+    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+        return _GitIgnorePythonMatcher(patterns)
 
 @lru_cache(maxsize=512)
 def gitignore_syntax_2_fnmatch(
@@ -182,6 +193,7 @@ class FilePattern(FileMatcher):
                 pats.append(f'*/{self.pattern}/*')
         return tuple(pats)
 
+    @override
     def match(self, path: str, is_dir: bool=False) -> FileMatchResult:
         match self.pattern:
             case '**', '/**':
@@ -269,6 +281,7 @@ class _GitIgnorePythonMatcher(FileMatcher):
             if parsed is not None:
                 self.patterns.append(parsed)
 
+    @override
     def match(self, path: str, is_dir: bool=False) -> FileMatchResult:
         """
         Check if a path should be ignored based on the configured patterns.
@@ -285,20 +298,3 @@ class _GitIgnorePythonMatcher(FileMatcher):
                     _match = _match._replace(description=f"{_match.description} (early stop)")
                     break
         return _match or FileMatchResult(False)
-
-class PurePythonMatcherFactory(FileMatcherFactory):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    def pattern2matcher(self, patterns: list[str] | tuple[str, ...]) -> FileMatcher:
-        if not isinstance(patterns, tuple):
-            patterns = tuple(patterns)  # make hashable for caching
-        return self._pattern2matcher(patterns)
-
-    @lru_cache(maxsize=128)
-    def _pattern2matcher(self, patterns: tuple[str, ...]) -> _GitIgnorePythonMatcher:
-        return _GitIgnorePythonMatcher(patterns)
-
