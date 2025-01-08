@@ -4,7 +4,8 @@ import tempfile
 from typing import Protocol, NamedTuple, Iterable, override
 from collections import namedtuple
 from threading import Lock
-from .file_matcher_api import FileMatcherFactory, FileMatcher, FileMatchResult
+from .file_matcher_base import FileMatcherFactoryBase
+from .file_matcher_api import FileMatcher, FileMatchResult
 
 class _GitContext(Protocol):
     def initialize_matcher(self, instance_id: int, patterns: tuple[str, ...]) -> None: ...
@@ -37,7 +38,7 @@ class _GitIgnoreNativeMatcher(FileMatcher):
         self._initialize()
         return self._git_context.run_git_check(self._instance_id, path)
 
-class GitNativeMatcherFactory(_GitContext, FileMatcherFactory):
+class GitNativeMatcherFactory(_GitContext, FileMatcherFactoryBase):
     def __init__(self):
         self._lock = Lock()
         self._temp_dir = None

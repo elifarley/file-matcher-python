@@ -35,5 +35,5 @@ class MatcherFactoryRegistry:
         raise NotImplementedError(str(matcher_implementation))
 
 _registry = MatcherFactoryRegistry()
-def get_factory(matcher_implementation: MatcherImplementation = MatcherImplementation.PURE_PYTHON):
+def get_factory(matcher_implementation: MatcherImplementation = MatcherImplementation.PURE_PYTHON) -> FileMatcherFactory:
     return _registry.get_factory(matcher_implementation)

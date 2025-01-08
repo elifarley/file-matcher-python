@@ -8,19 +8,37 @@ from enum import IntFlag, auto
 from pathlib import Path
 from typing import Generator, Optional, Iterable, override
 from functools import cached_property, lru_cache
-from .file_matcher_api import FileMatcherFactory, FileMatcher, FileMatchResult
+from .file_matcher_base import FileMatcherFactoryBase
+from .file_matcher_api import FileMatcher, FileMatchResult
 
 logging.basicConfig(level=logging.DEBUG)
 
-class PurePythonMatcherFactory(FileMatcherFactory):
+class PurePythonMatcherFactory(FileMatcherFactoryBase):
+    """
+    A pure Python implementation of the gitignore pattern matching factory.
+
+    This factory creates matchers that implement .gitignore-style pattern matching
+    without requiring external dependencies.
+    """
     def __enter__(self):
+        """Context manager entry point."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit point."""
         pass
 
     @override
     def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+        """
+        Create a new matcher instance for the given patterns.
+
+        Args:
+            patterns: A tuple of gitignore pattern strings.
+
+        Returns:
+            A FileMatcher instance configured with the given patterns.
+        """
         return _GitIgnorePythonMatcher(patterns)
 
 @lru_cache(maxsize=512)
@@ -39,10 +57,17 @@ def gitignore_syntax_2_fnmatch(
       a. '*'  means zero or more characters except for '/'
       b. '**' means zero or more characters, including '/'
     So, if there's at least 1 asterisk, we must return an equivalent re.Pattern
-    :param fnmatch_str_pattern:
-    :param is_anchored: if the pattern starts with a '/'
-    :param is_suffix: Cases like '*.txt'
-    :return:
+
+    Args:
+        fnmatch_str_pattern: The original gitignore pattern string.
+        is_anchored: Whether the pattern is anchored to the root (starts with /).
+        is_suffix: Whether the pattern is a simple suffix (e.g., *.txt).
+        append_slash_or_end: Whether to append pattern matching for path separator or end.
+        forced_suffix: Additional suffix to append to the pattern.
+
+    Returns:
+        Either a string pattern compatible with fnmatch or a compiled regex Pattern
+        that implements the gitignore matching behavior.
     """
     single_asterisk_count = fnmatch_str_pattern.count('*')
     double_asterisk_count = fnmatch_str_pattern.count('**') if single_asterisk_count > 0 else 0
@@ -75,16 +100,33 @@ def gitignore_syntax_2_fnmatch(
 
 
 class PatternFlag(IntFlag):
-    """Flags for gitignore pattern types"""
+    """
+    Flags representing different characteristics of gitignore patterns.
+
+    Attributes:
+        NONE: No special pattern characteristics
+        NEGATIVE: Pattern starts with ! (negation)
+        MUSTBEDIR: Pattern ends with / (must match directory)
+        ANCHORED: Pattern is anchored (starts with / or contains /)
+        SUFFIX: Pattern is a simple suffix (e.g., *.txt)
+    """
     NONE = 0
-    NEGATIVE = auto()      # Pattern starts with !
-    MUSTBEDIR = auto()     # Pattern ends with /
+    NEGATIVE = auto()
+    MUSTBEDIR = auto()
     ANCHORED = auto()
-    SUFFIX = auto()      # Pattern is a simple suffix (e.g. '*.txt')
+    SUFFIX = auto()
 
 @dataclass
 class FilePattern(FileMatcher):
-    """Represents a single gitignore pattern"""
+    """
+    Represents a single gitignore pattern with its matching behavior.
+
+    This class handles parsing and matching of individual gitignore patterns,
+    including support for negative patterns, directory-only patterns, and
+    anchored patterns.
+    """
+
+    __slots__ = ('base', 'original', 'pattern', 'flags', '__dict__')
     base: Path
     # Original pattern before processing
     original: str
@@ -94,7 +136,15 @@ class FilePattern(FileMatcher):
 
     @classmethod
     def from_line(cls, line: str) -> Optional['FilePattern']:
-        """Parse a single .gitignore line into a FilePattern object."""
+        """
+        Parse a single .gitignore line into a FilePattern object.
+
+        Args:
+            line: A single line from a .gitignore file
+
+        Returns:
+            FilePattern object or None if the line is empty or a comment
+        """
         line = line.rstrip()
 
         # Skip blank lines and comments
@@ -143,6 +193,7 @@ class FilePattern(FileMatcher):
 
     @property
     def is_none(self) -> bool:
+        """Check if the pattern has no special flags set."""
         return self.flags == PatternFlag.NONE
 
     @cached_property
@@ -263,6 +314,15 @@ class FilePattern(FileMatcher):
 
 
 class _GitIgnorePythonMatcher(FileMatcher):
+    """
+    Implementation of gitignore pattern matching using pure Python.
+
+    This matcher handles multiple patterns and implements the "last match wins"
+    behavior of .gitignore files.
+    """
+
+    __slots__ = ('patterns', 'base_path')
+
     def __init__(self, patterns: tuple[str, ...], base_path: str = "."):
         """
         Initialize GitIgnoreParser with a list of patterns.
@@ -285,7 +345,15 @@ class _GitIgnorePythonMatcher(FileMatcher):
     def match(self, path: str, is_dir: bool=False) -> FileMatchResult:
         """
         Check if a path should be ignored based on the configured patterns.
+
+        Args:
+            path: The path to check
+            is_dir: Whether the path represents a directory
+
+        Returns:
+            FileMatchResult containing the match result and description
         """
+
         path_is_dir = True if is_dir else path.endswith('/')
 
         # Last match wins
