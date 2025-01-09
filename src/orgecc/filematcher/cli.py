@@ -12,7 +12,8 @@ from typing import Generator, Iterator
 
 import click
 from rich.console import Console
-from rich.progress import track
+import time
+import logging
 
 from orgecc.filematcher.walker import walk
 
@@ -92,36 +93,30 @@ def filter_entries(
               type=click.Choice([e for e in OutputFormat]),
               default=OutputFormat.RELATIVE.value,
               help="Output format for paths")
-@click.option('--ignore-file',
-              type=click.Path(exists=True, dir_okay=False, path_type=Path),
-              help="Additional gitignore file to use")
-@click.option('--ignore',
-              multiple=True,
-              help="Additional patterns to ignore (can be specified multiple times)")
-@click.option('--base-ignore-file',
+@click.option('--exclude-from', '-X',
               type=click.Path(exists=True, dir_okay=False, path_type=Path),
               help="Base gitignore file to apply before others")
-@click.option('--base-ignore',
+@click.option('--exclude', '-x',
               multiple=True,
               help="Base patterns to ignore (applied before others)")
 @click.option('--null', '-0',
               is_flag=True,
               help="Use null character as separator (useful for xargs)")
-@click.option('--quiet', '-q',
+@click.option('--suppress-errors',
               is_flag=True,
               help="Suppress error messages")
-@click.option('--summary', '-s',
+@click.option('--quiet', '-q',
               is_flag=True,
-              help="Show summary statistics after completion")
+              help="Don't show summary, be quiet")
 def main(
     path: Path,
     entry_type: str,
     output_fmt: str,
-    base_ignore_file: Path | None,
-    base_ignore: tuple[str, ...] | None,
+    exclude_from: Path | None,
+    exclude: tuple[str, ...] | None,
     null: bool,
+    suppress_errors: bool,
     quiet: bool,
-    summary: bool,
 ) -> int:
     """List files and directories while respecting gitignore patterns.
 
@@ -135,7 +130,10 @@ def main(
         file-matcher /path/to/project --null | xargs -0 some_command
     """
     try:
-        import time
+        if not quiet:
+            logging.basicConfig(level=logging.WARNING)
+        elif suppress_errors:
+            logging.basicConfig(level=logging.CRITICAL)
         start_time = time.time()
 
         root = path.resolve()
@@ -144,8 +142,8 @@ def main(
         # Get all paths from the gitignore-aware walker
         all_paths = walk(
             root,
-            base_ignore_patterns=base_ignore,
-            base_ignore_file=base_ignore_file
+            base_ignore_patterns=exclude,
+            base_ignore_file=exclude_from
         )
 
         # Filter based on type
@@ -156,32 +154,33 @@ def main(
             click.echo(formatted_path, nl=not null)
             entry_count += 1
 
-        if summary:
+        if not quiet:
             end_time = time.time()
-            duration = end_time - start_time
+            duration_s = end_time - start_time
             click.echo(
                 f"\nSummary:",
                 err=True  # Print summary to stderr to not interfere with piping
             )
-            click.echo(f"  Time taken   : {duration:.2f}s", err=True)
-            click.echo(f"  Total entries: {entry_count}", err=True)
+            click.echo(f"  Time taken   : {duration_s:5.2f}s", err=True)
+            click.echo(f"  Total entries: {entry_count:5d}", err=True)
+            click.echo(f"  Entries/s    : {entry_count/duration_s:5.0f}", err=True)
             click.echo(f"--", err=True)
             click.echo(f"  Entry type: {entry_type}", err=True)
-            if base_ignore or base_ignore_file:
-                click.echo("  Base ignores:", err=True)
-                if base_ignore:
-                    click.echo(f"    Patterns: {', '.join(base_ignore)}", err=True)
-                if base_ignore_file:
-                    click.echo(f"    File: {base_ignore_file}", err=True)
+            if exclude or exclude_from:
+                click.echo("  Exclusions:", err=True)
+                if exclude:
+                    click.echo(f"    Patterns: {', '.join(exclude)}", err=True)
+                if exclude_from:
+                    click.echo(f"    File: {exclude_from}", err=True)
 
         return 0
 
     except KeyboardInterrupt:
-        if not quiet:
+        if not suppress_errors:
             click.echo("\nOperation cancelled by user", err=True, color=True)
         return 130
     except Exception as e:
-        if not quiet:
+        if not suppress_errors:
             click.echo(f"Error: {e}", err=True, color=True)
         return 1
 

@@ -11,8 +11,6 @@ from functools import cached_property, lru_cache
 from .file_matcher_base import FileMatcherFactoryBase
 from ..file_matcher_api import FileMatcher, FileMatchResult
 
-logging.basicConfig(level=logging.DEBUG)
-
 class PurePythonMatcherFactory(FileMatcherFactoryBase):
     """
     A pure Python implementation of the gitignore pattern matching factory.
@@ -95,7 +93,7 @@ def gitignore_syntax_2_fnmatch(
             pat += r'(/|\Z)'
         else:
             pat += r'\Z'
-    print(f'[gitignore_syntax_2_fnmatch] REGEX: {pat}')
+    logging.debug('[gitignore_syntax_2_fnmatch] REGEX: %s', pat)
     return re.compile(pat)
 
 
