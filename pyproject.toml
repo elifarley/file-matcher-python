@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "orgecc-file-matcher"
 dynamic = ["version"]
-description = "CLI and library to filter file paths via gitignore rules"
+description = "CLI and library for efficient file path filtering using gitignore rules"
 authors = [{ name = "Elifarley", email = "elifarley@gmail.com" }]
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -16,11 +16,14 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Libraries :: Python Modules :: gitignore :: wildmatch",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: System :: Filesystems",
 ]
-keywords = ["gitignore", "git"]
+keywords = ["gitignore", "git", "file-filter", "path-matcher", "wildmatch"]
 dependencies = [
-    "python-dotenv>=1.0.1",
+    "click>=8.1.8",  # Better CLI framework than argparse
+    "rich>=13.9.4",  # Better terminal output
 ]
 requires-python = ">=3.12"
 
@@ -34,18 +37,32 @@ Repository = "https://github.com/elifarley/file-matcher-python.git"
 dev = [
     "pytest>=7.0",
     "pytest-cov>=6.0.0",
+    "pytest-mock>=3.12.0",
     "black>=22.0",
     "isort>=5.0",
-    "flake8>=4.0",
+    "ruff>=0.1.9",  # Faster than flake8
     "mypy>=0.900",
     "coverage>=6.0",
     "tox>=3.24",
     "build>=1.2.2",
     "setuptools-scm>=8.1.0",
+    "pre-commit>=3.6.0",  # Git hooks for quality checks
+]
+
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.12.0",
+]
+
+docs = [
+    "sphinx>=7.1.2",
+    "sphinx-rtd-theme>=2.0.0",
+    "myst-parser>=2.0.0",
 ]
 
 [project.scripts]
-file-matcher = "cli:main"
+file-matcher = "orgecc.filematcher.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -55,30 +72,82 @@ package-dir = {"" = "src"}
 # >>> SETUPTOOLS_SCM_PRETEND_VERSION=0.0.2 python -m build
 # To dry-run and see version:
 # >>> python -m setuptools_scm
-write_to = "src/version/_version.py"
+write_to = "src/orgecc/filematcher/version/_version.py"
 # Append .post{number of commits} to your version if there are commits after the last tag.
 version_scheme = "post-release"
+local_scheme = "dirty-tag"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["cli", "version", "filematcher*", "directorywalker*"]
-namespaces = false
+include = ["orgecc*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+#addopts = "-ra -q --cov=orgecc.filematcher --cov-report=term-missing"
+addopts = "-ra -q"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
 
 [tool.black]
 line-length = 100
 target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/docs/
+'''
 
 [tool.isort]
 profile = "black"
 line_length = 100
+# known_first_party = ["orgecc"]
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = []
 
 [tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
 ignore_missing_imports = true
-strict = true
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q"
-testpaths = [
-    "tests",
-]

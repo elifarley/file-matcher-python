@@ -2,7 +2,7 @@ from typing import Iterable, override
 from pathlib import Path
 from functools import lru_cache
 
-from .file_matcher_api import FileMatcher, FileMatcherFactory
+from ..file_matcher_api import FileMatcher, FileMatcherFactory
 
 
 class FileMatcherFactoryBase(FileMatcherFactory):

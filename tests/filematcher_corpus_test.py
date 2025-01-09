@@ -29,7 +29,7 @@ from pathlib import Path
 from enum import Enum, auto
 from dataclasses import dataclass
 
-from filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation
+from orgecc.filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation
 
 # Path to our corpus directory (contains *.txt test files)
 CORPUS_DIR = Path(__file__).parent / "corpus"
@@ -81,7 +81,7 @@ class ParsedLine:
     path: str | None = None
 
 @dataclass
-class TestBlock:
+class IgnoreTestBlock:
     """
     Represents a block of parsed lines from the corpus file.
     """
@@ -106,7 +106,7 @@ class TestBlock:
                 failures.append(f"{tf_short} '{test.path}' {comment}{description}")
         return failures
 
-def resolve_block(block: list[ParsedLine]) -> TestBlock:
+def resolve_block(block: list[ParsedLine]) -> IgnoreTestBlock:
     """
     Creates a TestBlock instance from a list of ParsedLine objects.
 
@@ -123,7 +123,7 @@ def resolve_block(block: list[ParsedLine]) -> TestBlock:
     patterns = tuple(line.content for line in block if line.type == LineType.PATTERN)
     test_cases = [line for line in block if line.type == LineType.TEST_CASE]
 
-    return TestBlock(base_dir=base_dir, patterns=patterns, test_cases=test_cases)
+    return IgnoreTestBlock(base_dir=base_dir, patterns=patterns, test_cases=test_cases)
 
 class CorpusFileParser:
     """
@@ -209,7 +209,7 @@ class CorpusFileParser:
             comment=comment
         )
 
-    def parse_blocks(self) -> Generator[TestBlock, None, None]:
+    def parse_blocks(self) -> Generator[IgnoreTestBlock, None, None]:
         """
         Generates blocks of lines from the file content, one block at a time.
 
@@ -232,7 +232,7 @@ class CorpusFileParser:
         if current_block:
             yield resolve_block(current_block)
 
-def get_corpus_blocks() -> list[tuple[str, TestBlock]]:
+def get_corpus_blocks() -> list[tuple[str, IgnoreTestBlock]]:
     """
     Returns (test_id, block) tuples for each test block found in all *.txt corpus files
     under the CORPUS_DIR.
@@ -267,7 +267,7 @@ def get_corpus_blocks() -> list[tuple[str, TestBlock]]:
     return exclusive or result
 
 @pytest.mark.parametrize('test_id, block', get_corpus_blocks())
-def test_corpus_pure_python(test_id: str, block: TestBlock, file_matcher_factory_pure_python: FileMatcherFactory):
+def test_corpus_pure_python(test_id: str, block: IgnoreTestBlock, file_matcher_factory_pure_python: FileMatcherFactory):
     """
     Test each corpus block using the pure-Python FileMatcher.
 
@@ -281,7 +281,7 @@ def test_corpus_pure_python(test_id: str, block: TestBlock, file_matcher_factory
     _test_corpus(test_id, block, file_matcher_factory_pure_python)
 
 @pytest.mark.parametrize('test_id, block', get_corpus_blocks())
-def test_corpus_native(test_id: str, block: TestBlock, file_matcher_factory_native: FileMatcherFactory):
+def test_corpus_native(test_id: str, block: IgnoreTestBlock, file_matcher_factory_native: FileMatcherFactory):
     """
     Test each corpus block using the native-optimized FileMatcher.
 
@@ -290,7 +290,7 @@ def test_corpus_native(test_id: str, block: TestBlock, file_matcher_factory_nati
     """
     _test_corpus(test_id, block, file_matcher_factory_native)
 
-def _test_corpus(test_id: str, block: TestBlock, file_matcher_factory: FileMatcherFactory):
+def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: FileMatcherFactory):
     """
     Runs the actual logic to confirm whether each test case in a block matches
     the patterns as expected.

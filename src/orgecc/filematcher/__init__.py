@@ -1,10 +1,9 @@
-from version import __version__
 from functools import cached_property
 from enum import Enum, auto
 
 from .file_matcher_api import FileMatcherFactory, FileMatcher
-from .file_matcher_git import GitNativeMatcherFactory
-from .file_matcher_python import PurePythonMatcherFactory
+from .core  import GitNativeMatcherFactory
+from .core import PurePythonMatcherFactory
 
 __all__ = ('get_factory', 'MatcherImplementation', 'FileMatcherFactory', 'FileMatcher')
 

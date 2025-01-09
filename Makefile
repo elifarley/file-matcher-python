@@ -16,11 +16,11 @@ version v:
 	python -m setuptools_scm
 
 install i:
-	pip install --upgrade -e . \
+	pip install --upgrade -e .[dev] \
 	&& pip show orgecc-file-matcher
 
 test t:
-	pytest --cov=src/ tests/ --cov-report term-missing
+	pytest
 
 build b:
 	# SETUPTOOLS_SCM_PRETEND_VERSION=0.0.1

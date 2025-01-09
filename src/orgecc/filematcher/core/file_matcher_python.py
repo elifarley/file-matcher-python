@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Generator, Optional, Iterable, override
 from functools import cached_property, lru_cache
 from .file_matcher_base import FileMatcherFactoryBase
-from .file_matcher_api import FileMatcher, FileMatchResult
+from ..file_matcher_api import FileMatcher, FileMatchResult
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -126,7 +126,6 @@ class FilePattern(FileMatcher):
     anchored patterns.
     """
 
-    __slots__ = ('base', 'original', 'pattern', 'flags', '__dict__')
     base: Path
     # Original pattern before processing
     original: str

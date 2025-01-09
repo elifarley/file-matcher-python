@@ -5,7 +5,7 @@ from typing import Protocol, NamedTuple, Iterable, override
 from collections import namedtuple
 from threading import Lock
 from .file_matcher_base import FileMatcherFactoryBase
-from .file_matcher_api import FileMatcher, FileMatchResult
+from orgecc.filematcher.file_matcher_api import FileMatcher, FileMatchResult
 
 class _GitContext(Protocol):
     def initialize_matcher(self, instance_id: int, patterns: tuple[str, ...]) -> None: ...

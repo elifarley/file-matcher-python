@@ -1,3 +1,37 @@
+"""
+File Pattern Matching API for Gitignore-Style Path Filtering
+
+This module defines the core interfaces and data structures for implementing
+gitignore-style file pattern matching. It provides a flexible framework for
+filtering file paths based on pattern rules similar to those used in .gitignore
+files.
+
+Key Components:
+    - FileMatchResult: Data structure representing the result of a pattern match
+    - FileMatcher: Protocol for implementing pattern matching logic
+    - FileMatcherFactory: Protocol for creating matcher instances
+
+Typical Usage:
+    ```python
+    from filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation
+
+    factory = get_factory(MatcherImplementation.PURE_PYTHON)
+
+    matcher = factory.pattern2matcher(
+        ignore_patterns=[&quot;*.pyc&quot;, &quot;build/&quot;]
+    )
+    result = matcher.match(&quot;path/to/file.pyc&quot;)
+    if result.matches:
+        print(f&quot;Path ignored due to {result.description}&quot;)
+
+The system supports:
+- Gitignore-style pattern syntax (, *, /, etc.)
+- Directory-specific patterns
+- Pattern negation (!)
+- Multiple pattern sources (explicit patterns and pattern files)
+
+"""
+
 from typing import Protocol, Iterable
 from collections import namedtuple
 from pathlib import Path
