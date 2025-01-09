@@ -14,43 +14,47 @@ import click
 from rich.console import Console
 from rich.progress import track
 
-from .walker import walk
+from orgecc.filematcher.walker import walk
 
 console = Console()
+
 
 class OutputFormat(str, Enum):
     """Supported output formats for path display."""
     ABSOLUTE = "absolute"  # Full absolute path
     RELATIVE = "relative"  # Path relative to the root
-    NAME = "name"         # Just the file/directory name
+    NAME = "name"          # Just the file/directory name
+
 
 class EntryType(str, Enum):
     """Types of filesystem entries to display."""
-    ALL = "all"          # Both files and directories
-    FILE = "f"           # Files only
-    DIRECTORY = "d"      # Directories only
+    ALL = "all"         # Both files and directories
+    FILE = "f"          # Files only
+    DIRECTORY = "d"     # Directories only
+
 
 def format_path(
     path: Path,
     root: Path,
-    format_type: str
+    fmt_type: str
 ) -> str:
     """Format a path according to the specified output format.
 
     Args:
         path: The path to format
         root: The root directory for relative path calculation
-        format_type: The desired output format
+        fmt_type: The desired output format
 
     Returns:
         Formatted path string
     """
-    if format_type == OutputFormat.ABSOLUTE:
+    if fmt_type == OutputFormat.ABSOLUTE:
         return str(path.absolute())
-    elif format_type == OutputFormat.RELATIVE:
+    elif fmt_type == OutputFormat.RELATIVE:
         return str(path.relative_to(root))
     else:  # NAME
         return path.name
+
 
 def filter_entries(
     paths: Iterator[Path],
@@ -73,15 +77,18 @@ def filter_entries(
         elif entry_type == EntryType.DIRECTORY and path.is_dir():
             yield path
 
+
 @click.command(help="List files and directories while respecting gitignore patterns.")
 @click.argument('path',
                 type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path))
 @click.option('--type', '-t',
-              type=click.Choice([e.value for e in EntryType]),
+              'entry_type',  # internal name in function => entry_type
+              type=click.Choice([e for e in EntryType]),
               default=EntryType.ALL.value,
               help="Type of entries to show")
 @click.option('--format', '-f',
-              type=click.Choice([e.value for e in OutputFormat]),
+              'output_fmt',  # internal name in function => output_fmt
+              type=click.Choice([e for e in OutputFormat]),
               default=OutputFormat.RELATIVE.value,
               help="Output format for paths")
 @click.option('--null', '-0',
@@ -90,16 +97,17 @@ def filter_entries(
 @click.option('--quiet', '-q',
               is_flag=True,
               help="Suppress progress and error messages")
-@click.option('--follow-symlinks', '-L',
-              is_flag=True,
-              help="Follow symbolic links")
+# Will be implemented in the future
+# @click.option('--follow-symlinks', '-L',
+#               is_flag=True,
+#               help="Follow symbolic links")
+
 def main(
     path: Path,
-    type: str,
-    format: str,
+    entry_type: str,
+    output_fmt: str,
     null: bool,
     quiet: bool,
-    follow_symlinks: bool
 ) -> int:
     """List files and directories while respecting gitignore patterns.
 
@@ -115,23 +123,24 @@ def main(
         root = path.resolve()
         separator = '\0' if null else '\n'
 
-        with console.status("Scanning files...", disable=quiet):
-            # Get all paths first
-            all_paths = walk(root, follow_symlinks=follow_symlinks)
+        # Show a status spinner unless --quiet is used
+        with console.status("Scanning files..."):
+            # Get all paths from the gitignore-aware walker
+            all_paths = walk(root)
             # Filter based on type
-            filtered_paths = filter_entries(all_paths, type)
-            # Convert to list for progress tracking
+            filtered_paths = filter_entries(all_paths, entry_type)
+            # Convert to a list for progress tracking or repeated iteration
             paths = list(filtered_paths)
 
         if not quiet and paths:
             with console.status("Processing entries..."):
                 for p in track(paths, description="Processing entries"):
-                    formatted_path = format_path(p, root, format)
+                    formatted_path = format_path(p, root, output_fmt)
                     click.echo(formatted_path, nl=not null)
         else:
             # Direct output without progress tracking
             for p in paths:
-                formatted_path = format_path(p, root, format)
+                formatted_path = format_path(p, root, output_fmt)
                 click.echo(formatted_path, nl=not null)
 
         return 0
@@ -144,6 +153,7 @@ def main(
         if not quiet:
             console.print(f"Error: {e}", style="red")
         return 1
+
 
 if __name__ == '__main__':
     main()
