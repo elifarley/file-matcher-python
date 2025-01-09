@@ -1,12 +1,16 @@
 
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Iterable
 
 from orgecc.filematcher import get_factory, MatcherImplementation
 
 __all__ = ('walk',)
 
-def walk(root_dir: Path) -> Generator[Path, None, None]:
+def walk(
+    root_dir: Path,
+    base_ignore_patterns: Path | str | Iterable[str] | None = None,
+    base_ignore_file: Path | str | None = None
+) -> Generator[Path, None, None]:
     """Walks a directory tree respecting gitignore patterns.
 
     Traverses the directory tree starting at root_dir, yielding Path objects
@@ -15,6 +19,8 @@ def walk(root_dir: Path) -> Generator[Path, None, None]:
 
     Args:
         root_dir: Path object representing the root directory to start walking from.
+        base_ignore_patterns: Base patterns to ignore (applied first)
+        base_ignore_file: Path to file containing base patterns
 
     Yields:
         Path objects for non-ignored files and directories.
@@ -22,6 +28,7 @@ def walk(root_dir: Path) -> Generator[Path, None, None]:
     Raises:
         OSError: If root_dir doesn't exist or permission errors occur.
     """
+
     # Validate input
     if not root_dir.exists():
         raise OSError(f"Directory does not exist: {root_dir}")
@@ -33,7 +40,9 @@ def walk(root_dir: Path) -> Generator[Path, None, None]:
         # Look for .gitignore in root directory
         gitignore_path = root_dir / ".gitignore"
         matcher = factory.pattern2matcher(
-            ignore_file=gitignore_path if gitignore_path.exists() else None
+            ignore_file=gitignore_path if gitignore_path.exists() else None,
+            base_ignore_patterns=base_ignore_patterns,
+            base_ignore_file=base_ignore_file
         )
 
         def _walk_impl(current_dir: Path) -> Generator[Path, None, None]:

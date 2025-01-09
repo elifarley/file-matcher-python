@@ -48,12 +48,13 @@ def format_path(
     Returns:
         Formatted path string
     """
-    if fmt_type == OutputFormat.ABSOLUTE:
-        return str(path.absolute())
-    elif fmt_type == OutputFormat.RELATIVE:
-        return str(path.relative_to(root))
-    else:  # NAME
-        return path.name
+    match fmt_type:
+        case OutputFormat.ABSOLUTE:
+            return str(path.absolute())
+        case OutputFormat.RELATIVE:
+            return str(path.relative_to(root))
+        case _:  # NAME
+            return path.name
 
 
 def filter_entries(
@@ -82,78 +83,107 @@ def filter_entries(
 @click.argument('path',
                 type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path))
 @click.option('--type', '-t',
-              'entry_type',  # internal name in function => entry_type
+              'entry_type',
               type=click.Choice([e for e in EntryType]),
-              default=EntryType.ALL.value,
+              default=EntryType.FILE.value,  # Changed default to FILE
               help="Type of entries to show")
 @click.option('--format', '-f',
-              'output_fmt',  # internal name in function => output_fmt
+              'output_fmt',
               type=click.Choice([e for e in OutputFormat]),
               default=OutputFormat.RELATIVE.value,
               help="Output format for paths")
+@click.option('--ignore-file',
+              type=click.Path(exists=True, dir_okay=False, path_type=Path),
+              help="Additional gitignore file to use")
+@click.option('--ignore',
+              multiple=True,
+              help="Additional patterns to ignore (can be specified multiple times)")
+@click.option('--base-ignore-file',
+              type=click.Path(exists=True, dir_okay=False, path_type=Path),
+              help="Base gitignore file to apply before others")
+@click.option('--base-ignore',
+              multiple=True,
+              help="Base patterns to ignore (applied before others)")
 @click.option('--null', '-0',
               is_flag=True,
               help="Use null character as separator (useful for xargs)")
 @click.option('--quiet', '-q',
               is_flag=True,
-              help="Suppress progress and error messages")
-# Will be implemented in the future
-# @click.option('--follow-symlinks', '-L',
-#               is_flag=True,
-#               help="Follow symbolic links")
-
+              help="Suppress error messages")
+@click.option('--summary', '-s',
+              is_flag=True,
+              help="Show summary statistics after completion")
 def main(
     path: Path,
     entry_type: str,
     output_fmt: str,
+    base_ignore_file: Path | None,
+    base_ignore: tuple[str, ...] | None,
     null: bool,
     quiet: bool,
+    summary: bool,
 ) -> int:
     """List files and directories while respecting gitignore patterns.
 
     PATH is the root directory to start walking from.
 
     Examples:
-        file-matcher /path/to/project
-        file-matcher /path/to/project --type f --format absolute
-        file-matcher /path/to/project --type d --format name
+        file-matcher /path/to/project                    # List files only
+        file-matcher /path/to/project --type all         # List files and directories
+        file-matcher /path/to/project --ignore "*.tmp"   # Ignore .tmp files
+        file-matcher /path/to/project --ignore-file extra.gitignore
         file-matcher /path/to/project --null | xargs -0 some_command
     """
     try:
+        import time
+        start_time = time.time()
+
         root = path.resolve()
         separator = '\0' if null else '\n'
 
-        # Show a status spinner unless --quiet is used
-        with console.status("Scanning files..."):
-            # Get all paths from the gitignore-aware walker
-            all_paths = walk(root)
-            # Filter based on type
-            filtered_paths = filter_entries(all_paths, entry_type)
-            # Convert to a list for progress tracking or repeated iteration
-            paths = list(filtered_paths)
+        # Get all paths from the gitignore-aware walker
+        all_paths = walk(
+            root,
+            base_ignore_patterns=base_ignore,
+            base_ignore_file=base_ignore_file
+        )
 
-        if not quiet and paths:
-            with console.status("Processing entries..."):
-                for p in track(paths, description="Processing entries"):
-                    formatted_path = format_path(p, root, output_fmt)
-                    click.echo(formatted_path, nl=not null)
-        else:
-            # Direct output without progress tracking
-            for p in paths:
-                formatted_path = format_path(p, root, output_fmt)
-                click.echo(formatted_path, nl=not null)
+        # Filter based on type
+        entry_count = 0
+        # Output paths
+        for p in filter_entries(all_paths, entry_type):
+            formatted_path = format_path(p, root, output_fmt)
+            click.echo(formatted_path, nl=not null)
+            entry_count += 1
+
+        if summary:
+            end_time = time.time()
+            duration = end_time - start_time
+            click.echo(
+                f"\nSummary:",
+                err=True  # Print summary to stderr to not interfere with piping
+            )
+            click.echo(f"  Time taken   : {duration:.2f}s", err=True)
+            click.echo(f"  Total entries: {entry_count}", err=True)
+            click.echo(f"--", err=True)
+            click.echo(f"  Entry type: {entry_type}", err=True)
+            if base_ignore or base_ignore_file:
+                click.echo("  Base ignores:", err=True)
+                if base_ignore:
+                    click.echo(f"    Patterns: {', '.join(base_ignore)}", err=True)
+                if base_ignore_file:
+                    click.echo(f"    File: {base_ignore_file}", err=True)
 
         return 0
 
     except KeyboardInterrupt:
         if not quiet:
-            console.print("\nOperation cancelled by user", style="yellow")
+            click.echo("\nOperation cancelled by user", err=True, color=True)
         return 130
     except Exception as e:
         if not quiet:
-            console.print(f"Error: {e}", style="red")
+            click.echo(f"Error: {e}", err=True, color=True)
         return 1
-
 
 if __name__ == '__main__':
     main()

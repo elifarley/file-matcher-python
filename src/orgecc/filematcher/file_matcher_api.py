@@ -77,7 +77,11 @@ class FileMatcherFactory(Protocol):
     """
 
     def pattern2matcher(
-        self, ignore_patterns: Path | str | Iterable[str] | None = None, ignore_file: Path | str | None = None
+        self,
+        ignore_patterns: Path | str | Iterable[str] | None = None,
+        ignore_file: Path | str | None = None,
+        base_ignore_patterns: Path | str | Iterable[str] | None = None,
+        base_ignore_file: Path | str | None = None
     ) -> FileMatcher:
         """
         Create a new matcher instance from patterns or pattern files.
