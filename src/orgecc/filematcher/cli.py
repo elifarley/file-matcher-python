@@ -15,7 +15,7 @@ from rich.console import Console
 import time
 import logging
 
-from orgecc.filematcher.walker import walk
+from orgecc.filematcher.walker import DirectoryWalker
 
 console = Console()
 
@@ -131,28 +131,29 @@ def main(
     """
     try:
         if not quiet:
-            logging.basicConfig(level=logging.WARNING)
+            level = logging.WARNING
+
         elif suppress_errors:
-            logging.basicConfig(level=logging.CRITICAL)
+            level = logging.CRITICAL
+
+        logging.basicConfig(level=level, format='%(asctime)s:%(levelname)s:%(module)s:%(message)s')
         start_time = time.time()
 
         root = path.resolve()
         separator = '\0' if null else '\n'
 
         # Get all paths from the gitignore-aware walker
-        all_paths = walk(
-            root,
+
+        walker = DirectoryWalker(
             base_ignore_patterns=exclude,
             base_ignore_file=exclude_from
         )
 
-        # Filter based on type
-        entry_count = 0
         # Output paths
-        for p in filter_entries(all_paths, entry_type):
+        # Filter based on type
+        for p in filter_entries(walker.walk(root), entry_type):
             formatted_path = format_path(p, root, output_fmt)
             click.echo(formatted_path, nl=not null)
-            entry_count += 1
 
         if not quiet:
             end_time = time.time()
@@ -162,8 +163,16 @@ def main(
                 err=True  # Print summary to stderr to not interfere with piping
             )
             click.echo(f"  Time taken   : {duration_s:5.2f}s", err=True)
-            click.echo(f"  Total entries: {entry_count:5d}", err=True)
-            click.echo(f"  Entries/s    : {entry_count/duration_s:5.0f}", err=True)
+            total_entry_count = walker.stats.yielded_count + walker.stats.ignored_count
+            click.echo(f"  Total entries: {total_entry_count :5d} ({total_entry_count/duration_s:5.0f} / s)", err=True)
+            click.echo(
+                f"    Included   : {walker.stats.yielded_count :5d} "
+                f"({walker.stats.yielded_count/duration_s:5.0f} / s)", err=True
+            )
+            click.echo(
+                f"    Excluded   : {walker.stats.ignored_count :5d} "
+                f"({walker.stats.ignored_count/duration_s:5.0f} / s)", err=True
+            )
             click.echo(f"--", err=True)
             click.echo(f"  Entry type: {entry_type}", err=True)
             if exclude or exclude_from:
