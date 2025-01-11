@@ -16,6 +16,7 @@ import time
 import logging
 
 from orgecc.filematcher.walker import DirectoryWalker
+from orgecc.filematcher.patterns import new_deny_pattern_source, merge_deny_pattern_sources
 
 console = Console()
 
@@ -144,10 +145,7 @@ def main(
 
         # Get all paths from the gitignore-aware walker
 
-        walker = DirectoryWalker(
-            base_ignore_patterns=exclude,
-            base_ignore_file=exclude_from
-        )
+        walker = DirectoryWalker(new_deny_pattern_source(patterns=exclude, file=exclude_from))
 
         # Output paths
         # Filter based on type

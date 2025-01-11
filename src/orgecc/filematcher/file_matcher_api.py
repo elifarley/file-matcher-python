@@ -32,10 +32,17 @@ The system supports:
 
 """
 
-from typing import Protocol, Iterable
+from typing import Protocol
 from collections import namedtuple
-from pathlib import Path
 
+class DenyPatternSource:
+    @property
+    def deny_patterns(self) -> tuple[str, ...]: ...
+
+
+class AllowPatternSource:
+    @property
+    def allow_patterns(self) -> set[str]: ...
 
 FileMatchResult = namedtuple('FileMatchResult', ['matches', 'description', 'by_dir'], defaults=[None, False])
 """
@@ -46,6 +53,7 @@ Attributes:
     description (str | None): Description of the match result, useful for debugging
     by_dir (bool): Whether the match was determined by directory status, defaults to False
 """
+
 
 class FileMatcher(Protocol):
     """
@@ -76,20 +84,12 @@ class FileMatcherFactory(Protocol):
     while maintaining a consistent way to create matcher instances.
     """
 
-    def pattern2matcher(
-        self,
-        ignore_patterns: Path | str | Iterable[str] | None = None,
-        ignore_file: Path | str | None = None,
-        base_ignore_patterns: Path | str | Iterable[str] | None = None,
-        base_ignore_file: Path | str | None = None
-    ) -> FileMatcher:
+    def pattern2matcher(self, deny_source: DenyPatternSource) -> FileMatcher:
         """
         Create a new matcher instance from patterns or pattern files.
 
         Args:
-            ignore_patterns: Individual patterns to ignore, can be a single pattern
-                           or an iterable of patterns
-            ignore_file: Path to a file containing patterns (e.g., .gitignore)
+            deny_source: Patterns to ignore
 
         Returns:
             A FileMatcher instance configured with the specified patterns

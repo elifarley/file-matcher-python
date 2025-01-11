@@ -1,7 +1,7 @@
 from functools import cached_property
 from enum import Enum, auto
 
-from .file_matcher_api import FileMatcherFactory, FileMatcher
+from .file_matcher_api import FileMatcherFactory, FileMatcher, DenyPatternSource
 from .core  import GitNativeMatcherFactory
 from .core import PurePythonMatcherFactory
 

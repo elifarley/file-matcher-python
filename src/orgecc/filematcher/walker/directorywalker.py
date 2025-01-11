@@ -3,8 +3,8 @@ from typing import Generator, Iterable
 import logging
 from dataclasses import dataclass
 
-from orgecc.filematcher import get_factory, MatcherImplementation, FileMatcher
-
+from orgecc.filematcher import get_factory, MatcherImplementation, FileMatcher, DenyPatternSource
+from ..patterns import new_deny_pattern_source, merge_deny_pattern_sources
 
 logger = logging.getLogger(__name__)
 
@@ -22,18 +22,12 @@ class DirectoryWalker:
 
     def __init__(
         self,
-        base_ignore_patterns: Path | str | Iterable[str] | None = None,
-        base_ignore_file: Path | str | None = None,
+        deny_base: DenyPatternSource
     ):
         """
         Initialize the directory walker with base ignore patterns.
-
-        Args:
-            base_ignore_patterns: Base patterns to ignore (applied first).
-            base_ignore_file: Path to a file containing base patterns.
         """
-        self.base_ignore_patterns = base_ignore_patterns
-        self.base_ignore_file = base_ignore_file
+        self.deny_base = deny_base
         self.stats = WalkStats()
 
     def walk(
@@ -71,11 +65,9 @@ class DirectoryWalker:
         with get_factory(MatcherImplementation.PURE_PYTHON) as factory:
             # Create a top-level matcher from base patterns or a root-level .gitignore
             root_gitignore = root_dir / ".gitignore"
-            parent_matcher = factory.pattern2matcher(
-                ignore_file=root_gitignore if root_gitignore.exists() else None,
-                base_ignore_patterns=self.base_ignore_patterns,
-                base_ignore_file=self.base_ignore_file,
-            )
+            deny_main = new_deny_pattern_source(file=root_gitignore if root_gitignore.exists() else None)
+            deny_source = merge_deny_pattern_sources(base=self.deny_base, main=deny_main)
+            parent_matcher = factory.pattern2matcher(deny_source)
 
             yield from self._walk_impl(
                 current_dir=root_dir,

@@ -29,7 +29,8 @@ from pathlib import Path
 from enum import Enum, auto
 from dataclasses import dataclass
 
-from orgecc.filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation
+from orgecc.filematcher import get_factory, FileMatcherFactory, FileMatcher, MatcherImplementation, DenyPatternSource
+from orgecc.filematcher.patterns import new_deny_pattern_source
 
 # Path to our corpus directory (contains *.txt test files)
 CORPUS_DIR = Path(__file__).parent / "corpus"
@@ -86,7 +87,7 @@ class IgnoreTestBlock:
     Represents a block of parsed lines from the corpus file.
     """
     base_dir: str
-    patterns: tuple[str, ...]
+    deny_pattern_source: DenyPatternSource
     test_cases: list[ParsedLine]
 
     def check_matches(self, file_matcher: FileMatcher) -> list[str]:
@@ -123,7 +124,7 @@ def resolve_block(block: list[ParsedLine]) -> IgnoreTestBlock:
     patterns = tuple(line.content for line in block if line.type == LineType.PATTERN)
     test_cases = [line for line in block if line.type == LineType.TEST_CASE]
 
-    return IgnoreTestBlock(base_dir=base_dir, patterns=patterns, test_cases=test_cases)
+    return IgnoreTestBlock(base_dir=base_dir, deny_pattern_source=new_deny_pattern_source(patterns), test_cases=test_cases)
 
 class CorpusFileParser:
     """
@@ -283,7 +284,7 @@ def test_corpus_pure_python(test_id: str, block: IgnoreTestBlock, file_matcher_f
 @pytest.mark.parametrize('test_id, block', get_corpus_blocks())
 def test_corpus_native(test_id: str, block: IgnoreTestBlock, file_matcher_factory_native: FileMatcherFactory):
     """
-    Test each corpus block using the native-optimized FileMatcher.
+    Test each corpus block using the git-based FileMatcher.
 
     This test is parametrized by the `get_corpus_blocks()` generator, so each block
     in each corpus file becomes a separate test invocation.
@@ -303,7 +304,7 @@ def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: Fil
     5. If any mismatches exist, raise a pytest failure with details.
     """
     # Create a file matcher from the patterns
-    file_matcher: FileMatcher = file_matcher_factory.pattern2matcher(block.patterns)
+    file_matcher: FileMatcher = file_matcher_factory.pattern2matcher(block.deny_pattern_source)
 
     # Check matches and collect failures
     failures = block.check_matches(file_matcher)
@@ -314,7 +315,7 @@ def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: Fil
         title = f"Failures: {len(failures)} ({test_id})"
         error_msg = [
             "<.gitignore>",
-            *block.patterns,
+            *block.deny_pattern_source, # TODO Format correctly
             "</.gitignore>",
             f"\n\n== {title} ==\n",
             *failures
