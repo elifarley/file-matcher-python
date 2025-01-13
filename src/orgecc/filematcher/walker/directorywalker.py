@@ -24,12 +24,14 @@ class DirectoryWalker:
 
     def __init__(
         self,
-        deny_base: DenyPatternSource
+        deny_base: DenyPatternSource | None = None,
+        matcher_type: MatcherImplementation = MatcherImplementation.PURE_PYTHON
     ):
         """
         Initialize the directory walker with base ignore patterns.
         """
         self.deny_base = deny_base
+        self.matcher_type = matcher_type
         self.stats = WalkStats()
 
     def walk(
@@ -37,6 +39,7 @@ class DirectoryWalker:
         root_dir: PurePath | Traversable,
         min_depth: int = 0,
         max_depth: int | None = None,
+        matcher_type: MatcherImplementation | None = None
     ) -> Generator[PurePath, None, None]:
         """
         Walk the directory tree, yielding non-ignored paths.
@@ -62,7 +65,7 @@ class DirectoryWalker:
         # Reset statistics for new walk
         self.stats = WalkStats()
 
-        with get_factory(MatcherImplementation.PURE_PYTHON) as factory:
+        with get_factory(matcher_type or self.matcher_type) as factory:
             # Create a top-level matcher from base patterns or a root-level .gitignore
             root_gitignore = root_dir / ".gitignore"
             deny_main = new_deny_pattern_source(file=root_gitignore if root_gitignore.exists() else None)

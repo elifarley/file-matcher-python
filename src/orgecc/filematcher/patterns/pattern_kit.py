@@ -21,6 +21,8 @@ class PatternSourceBase():
     ):
         if patterns and file:
             raise ValueError("Cannot provide both patterns and file for PatternSource.")
+        if not patterns and not file:
+            raise ValueError("At least 1 pattern is required.")
         self.patterns = patterns
         self.file = Path(file) if file else None
 
@@ -102,8 +104,8 @@ class AllowPatternSourceImpl(PatternSourceBase, AllowPatternSource):
 
 @dataclass
 class DenyPatternSourceGroup(DenyPatternSource):
-    deny_base: DenyPatternSource
-    deny_main: DenyPatternSource
+    deny_base: DenyPatternSource | None
+    deny_main: DenyPatternSource | None
 
     @override
     @property
@@ -135,7 +137,7 @@ class DenyPatternSourceGroup(DenyPatternSource):
         seen = set()
         final_patterns = []
 
-        for pattern in self.deny_base.deny_patterns + self.deny_main.deny_patterns:
+        for pattern in (self.deny_base.deny_patterns if self.deny_base else tuple()) + (self.deny_main.deny_patterns if self.deny_main else tuple()):
             if pattern not in seen:
                 seen.add(pattern)
                 final_patterns.append(pattern)
