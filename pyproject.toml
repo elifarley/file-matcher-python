@@ -34,31 +34,36 @@ Repository = "https://github.com/elifarley/file-matcher-python.git"
 "Bug Tracker" = "https://github.com/elifarley/file-matcher-python/issues"
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=6.0.0",
-    "pytest-mock>=3.12.0",
-    "black>=22.0",
-    "isort>=5.0",
-    "ruff>=0.1.9",  # Faster than flake8
-    "mypy>=0.900",
-    "coverage>=6.0",
-    "tox>=3.24",
-    "build>=1.2.2",
-    "setuptools-scm>=8.1.0",
-    "pre-commit>=3.6.0",  # Git hooks for quality checks
-]
-
 test = [
     "pytest>=7.0",
     "pytest-cov>=6.0.0",
+    "pytest-benchmark>=5.1.0",
     "pytest-mock>=3.12.0",
+    "gitignorefile>=1.1.2",
+    "pathspec>=0.12.1",
+    "setuptools-scm>=8.1.0",
 ]
 
 docs = [
     "sphinx>=7.1.2",
     "sphinx-rtd-theme>=2.0.0",
     "myst-parser>=2.0.0",
+]
+
+dev = [
+    "orgecc-file-matcher[test]",
+    "pre-commit>=3.6.0",  # Git hooks for quality checks
+    "black>=22.0",
+    "isort>=5.0",
+    "ruff>=0.1.9",  # Faster than flake8
+    "mypy>=0.900",
+    "tox>=3.24",
+]
+
+dist = [
+    "orgecc-file-matcher[test]",
+    "build>=1.2.2",
+    "twine"
 ]
 
 [project.scripts]
@@ -84,8 +89,9 @@ namespaces = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-#addopts = "-ra -q --cov=orgecc.filematcher --cov-report=term-missing"
-addopts = "-ra -q"
+# TODO:
+addopts = "--tb=short -ra -q --cov=orgecc.filematcher --cov-report=term-missing"
+#addopts = "--tb=short -ra -q"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
