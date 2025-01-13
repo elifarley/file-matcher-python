@@ -36,6 +36,18 @@ from orgecc.filematcher.patterns import new_deny_pattern_source
 CORPUS_DIR = Path(__file__).parent / "corpus"
 
 @pytest.fixture(scope="session")
+def file_matcher_factory_pure_python(request) -> FileMatcherFactory:
+    """
+    Provide a single pure-Python FileMatcherFactory instance for all tests in the session.
+
+    This fixture uses a Python-only implementation of the matching logic, which is a lot faster than calling git itself.
+    """
+    factory = get_factory(MatcherImplementation.PURE_PYTHON)
+    factory.__enter__()
+    request.addfinalizer(lambda: factory.__exit__(None, None, None))
+    return factory
+
+@pytest.fixture(scope="session")
 def file_matcher_factory_native(request) -> FileMatcherFactory:
     """
     Provide a single "native" (that is, one that directly calls the git command) FileMatcherFactory instance
@@ -47,13 +59,21 @@ def file_matcher_factory_native(request) -> FileMatcherFactory:
     return factory
 
 @pytest.fixture(scope="session")
-def file_matcher_factory_pure_python(request) -> FileMatcherFactory:
+def file_matcher_factory_extlib_gitignorefile(request) -> FileMatcherFactory:
     """
-    Provide a single pure-Python FileMatcherFactory instance for all tests in the session.
+    Provide a single FileMatcherFactory instance (which delegates to an external library) for all tests in the session.
+    """
+    factory = get_factory(MatcherImplementation.EXTLIB_GITIGNOREFILE)
+    factory.__enter__()
+    request.addfinalizer(lambda: factory.__exit__(None, None, None))
+    return factory
 
-    This fixture uses a Python-only implementation of the matching logic, which is a lot faster than calling git itself.
+@pytest.fixture(scope="session")
+def file_matcher_factory_extlib_pathspec(request) -> FileMatcherFactory:
     """
-    factory = get_factory(MatcherImplementation.PURE_PYTHON)
+    Provide a single FileMatcherFactory instance (which delegates to an external library) for all tests in the session.
+    """
+    factory = get_factory(MatcherImplementation.EXTLIB_PATHSPEC)
     factory.__enter__()
     request.addfinalizer(lambda: factory.__exit__(None, None, None))
     return factory
@@ -291,17 +311,30 @@ def test_corpus_native(test_id: str, block: IgnoreTestBlock, file_matcher_factor
     """
     _test_corpus(test_id, block, file_matcher_factory_native)
 
-def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: FileMatcherFactory):
+@pytest.mark.parametrize('test_id, block', get_corpus_blocks())
+def test_corpus_extlib_gitignorefile(test_id: str, block: IgnoreTestBlock, file_matcher_factory_extlib_gitignorefile: FileMatcherFactory):
+    """
+    Test each corpus block using the gitignorefile-based FileMatcher.
+
+    This test is parametrized by the `get_corpus_blocks()` generator, so each block
+    in each corpus file becomes a separate test invocation.
+    """
+    _test_corpus(test_id, block, file_matcher_factory_extlib_gitignorefile, expected_to_fail=True)
+
+@pytest.mark.parametrize('test_id, block', get_corpus_blocks())
+def test_corpus_extlib_pathspec(test_id: str, block: IgnoreTestBlock, file_matcher_factory_extlib_pathspec: FileMatcherFactory):
+    """
+    Test each corpus block using the pathspec-based FileMatcher.
+
+    This test is parametrized by the `get_corpus_blocks()` generator, so each block
+    in each corpus file becomes a separate test invocation.
+    """
+    _test_corpus(test_id, block, file_matcher_factory_extlib_pathspec, expected_to_fail=True)
+
+def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: FileMatcherFactory, expected_to_fail: bool = False):
     """
     Runs the actual logic to confirm whether each test case in a block matches
     the patterns as expected.
-
-    The steps are:
-    1. Identify the base directory (from the BLOCK_START line).
-    2. Extract all pattern lines (PATTERN) into a single list of patterns.
-    3. Compile these patterns into a single matcher using the FileMatcherFactory.
-    4. For each TEST_CASE line, compare the expected match with the actual match result.
-    5. If any mismatches exist, raise a pytest failure with details.
     """
     # Create a file matcher from the patterns
     file_matcher: FileMatcher = file_matcher_factory.pattern2matcher(block.deny_pattern_source)
@@ -315,12 +348,15 @@ def _test_corpus(test_id: str, block: IgnoreTestBlock, file_matcher_factory: Fil
         title = f"Failures: {len(failures)} ({test_id})"
         error_msg = [
             "<.gitignore>",
-            *block.deny_pattern_source, # TODO Format correctly
+            *block.deny_pattern_source,
             "</.gitignore>",
             f"\n\n== {title} ==\n",
             *failures
         ]
-        pytest.fail('\n'.join(error_msg), pytrace=False)
+        error_msg = '\n'.join(error_msg)
+        if not expected_to_fail:
+            pytest.fail(error_msg, pytrace=False)
+        pytest.xfail(error_msg)
 
 if __name__ == '__main__':
     # If you run this file directly, pytest is invoked on the module itself.
