@@ -4,5 +4,6 @@ import logging
 from dataclasses import dataclass
 
 from .directorywalker import DirectoryWalker
+from file_kit import relative_to
 
-__all__ = ('walker',)
+__all__ = ('DirectoryWalker', 'relative_to')
