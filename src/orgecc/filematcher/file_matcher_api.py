@@ -32,17 +32,22 @@ The system supports:
 
 """
 
-from typing import Protocol
+from typing import Protocol, Iterable
 from collections import namedtuple
 
-class DenyPatternSource:
+class DenyPatternSource(Iterable[str]):
     @property
     def deny_patterns(self) -> tuple[str, ...]: ...
 
+    def __iter__(self) -> Iterable[str]:
+        return iter(self.deny_patterns)
 
-class AllowPatternSource:
+class AllowPatternSource(Iterable[str]):
     @property
     def allow_patterns(self) -> set[str]: ...
+
+    def __iter__(self) -> Iterable[str]:
+        return iter(self.allow_patterns)
 
 FileMatchResult = namedtuple('FileMatchResult', ['matches', 'description', 'by_dir'], defaults=[None, False])
 """
