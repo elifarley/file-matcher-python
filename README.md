@@ -1,10 +1,12 @@
 # Orgecc File Matcher
 
+A Python library and CLI tool for Git-compatible file matching and directory traversal.
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python Versions](https://img.shields.io/pypi/pyversions/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
 [![CI](https://github.com/yourusername/file-matcher-python/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/file-matcher-python/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/orgecc-file-matcher)](https://pypi.org/project/orgecc-file-matcher/)
 [![PyPI version](https://badge.fury.io/py/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A versatile command-line, Python library and toolkit for `.gitignore`-style file matching, designed to meet four key goals:
@@ -16,20 +18,16 @@ A versatile command-line, Python library and toolkit for `.gitignore`-style file
 
 ## Features
 
-- **Git-Compatible Matching**: The pure Python matcher passes all test cases, unlike many other libraries.
+- **Git-Compatible Matching**: Pure Python implementation passes all test cases, ensuring 100% compatibility with Git's behavior.
 - **Multiple Implementations**: Choose from pure Python, external libraries ([gitignorefile](https://github.com/excitoon/gitignorefile), [pathspec](https://github.com/excitoon/gitignorefile)), or native Git integration.
-- **[Comprehensive Test Suite](#unit-testing)**: Includes a [corpus of test cases](tests/corpus) to validate `.gitignore` matching behavior.
+- **Multiple Implementations** (see available options in [MatcherImplementation](src/orgecc/filematcher/__init__.py)):
+  - **Pure Python**: No external dependencies. Aims at 100% Git compatibility.
+  - **Native Git Integration**: Internally calls `git check-ignore -v`. The unit tests are adjusted according to this implementation.
+  - **External Libraries**: Supports [gitignorefile](https://github.com/excitoon/gitignorefile) and [pathspec](https://github.com/cpburnz/python-path-specification).
+- **[Comprehensive Test Suite](#unit-testing)**: Includes a [test corpus](tests/corpus) for validating `.gitignore` matching behavior.
 - **Tree-Sitter-Inspired Testing**: The corpus files follow the same rigorous testing principles used by [Tree-Sitter](https://tree-sitter.github.io/tree-sitter/), ensuring high-quality and reliable test coverage.
 - **Efficient Directory Traversal**: A file walker that skips ignored files and directories.
 - **Cross-Platform**: Works seamlessly on Windows, macOS, and Linux.
-
-## Supported Implementations
-
-See available options in [MatcherImplementation](src/orgecc/filematcher/__init__.py)
-
-- **Pure Python**: No external dependencies. Aims at 100% Git compatibility.
-- **Native Git**: Use Git's built-in pattern matching (`git check-ignore -v`) for maximum compatibility. The unit tests are adjusted according to this implementation.
-- **External Libraries**: Leverage `gitignorefile` or `pathspec` for enhanced performance.
 
 ## Installation
 
@@ -47,19 +45,22 @@ Use the Git-compatible pure Python matcher (the default):
 
 ```python
 from orgecc.filematcher import get_factory, MatcherImplementation
+from orgecc.filematcher.patterns import new_deny_pattern_source
 
 factory = get_factory(MatcherImplementation.PURE_PYTHON)
-matcher = factory.pattern2matcher(patterns=["*.pyc", "build/"])
+patterns = new_deny_pattern_source(["*.pyc", "build/"])
+matcher = factory.pattern2matcher(patterns)
 result = matcher.match("path/to/file.pyc")
 print(result.matches)  # True or False, matching Git's behavior
 ```
+
 ### File Walker
 
 Traverse directories while respecting `.gitignore` rules:
 
 #### CLI Tool for _macOS_, _Linux_ and _Windows_
-You can use the provided command-line tool:
 
+Use the provided CLI tool to traverse directories while respecting .gitignore rules:
 
 ```shell
 file-walker --help
@@ -92,6 +93,8 @@ from orgecc.filematcher.walker import DirectoryWalker
 walker = DirectoryWalker()
 for file in walker.walk("path/to/directory"):
     print(file)
+print(walker.yielded_count)
+print(walker.ignored_count)
 ```
 
 ### Unit Testing
@@ -204,3 +207,4 @@ factory = get_factory(MatcherImplementation.EXTLIB_GITIGNOREFILE)
 ## License
 
 This project is licensed under the Apache 2 License - see the [LICENSE](LICENSE) file for details.
+
