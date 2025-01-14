@@ -2,12 +2,11 @@
 
 A Python library and CLI tool for Git-compatible file matching and directory traversal.
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python Versions](https://img.shields.io/pypi/pyversions/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
-[![CI](https://github.com/yourusername/file-matcher-python/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/file-matcher-python/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/orgecc-file-matcher)](https://pypi.org/project/orgecc-file-matcher/)
-[![PyPI version](https://badge.fury.io/py/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/orgecc-file-matcher.svg)](https://pypi.org/project/orgecc-file-matcher/)
+[![CI](https://github.com/elifarley/file-matcher-python/actions/workflows/test.yml/badge.svg)](https://github.com/elifarley/file-matcher-python/actions/workflows/test.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A versatile command-line, Python library and toolkit for `.gitignore`-style file matching, designed to meet four key goals:
 
