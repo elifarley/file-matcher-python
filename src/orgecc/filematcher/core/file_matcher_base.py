@@ -1,8 +1,7 @@
 from typing import override
 from functools import lru_cache
 
-from ..file_matcher_api import FileMatcher, FileMatcherFactory
-from orgecc.filematcher.patterns.pattern_kit import DenyPatternSource
+from ..file_matcher_api import FileMatcher, FileMatcherFactory, DenyPatternSource
 
 
 class FileMatcherFactoryBase(FileMatcherFactory):

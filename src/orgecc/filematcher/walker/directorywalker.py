@@ -1,12 +1,14 @@
-from pathlib import PurePath, Path
-from typing import Generator, Iterable
-import logging
-from dataclasses import dataclass
+from os import PathLike
+from pathlib import PurePath
 from importlib.resources.abc import Traversable
+from typing import Generator
+from dataclasses import dataclass
+import logging
 
 from orgecc.filematcher import get_factory, MatcherImplementation, FileMatcher, DenyPatternSource
+from orgecc.filematcher.filekit import PathLikeOrPurePathOrTraversable, normalize_path_object, relative_to
+
 from ..patterns import new_deny_pattern_source, merge_deny_pattern_sources
-from .file_kit import relative_to
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ class DirectoryWalker:
 
     def walk(
         self,
-        root_dir: PurePath | Traversable,
+        root_dir: PathLikeOrPurePathOrTraversable,
         min_depth: int = 0,
         max_depth: int | None = None,
         matcher_type: MatcherImplementation | None = None
@@ -54,11 +56,14 @@ class DirectoryWalker:
                 (None or a negative number means no limit).
 
         Returns:
-            Generator yielding Path objects for non-ignored files and directories.
+            Generator yielding PurePath objects for non-ignored files and directories.
 
         Raises:
             OSError: If root_dir doesn't exist or is not a directory.
         """
+
+        root_dir = normalize_path_object(root_dir)
+
         if not root_dir.is_dir():
             raise OSError(f"Path is not a directory: {root_dir}")
 

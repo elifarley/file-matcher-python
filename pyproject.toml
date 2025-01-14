@@ -67,7 +67,7 @@ dist = [
 ]
 
 [project.scripts]
-file-matcher = "orgecc.filematcher.cli:main"
+file-walker = "orgecc.filematcher.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -89,9 +89,7 @@ namespaces = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-# TODO:
 addopts = "--tb=short -ra -q --cov=orgecc.filematcher --cov-report=term-missing"
-#addopts = "--tb=short -ra -q"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]

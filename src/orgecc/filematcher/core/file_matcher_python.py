@@ -114,7 +114,7 @@ class PatternFlag(IntFlag):
     ANCHORED = auto()
     SUFFIX = auto()
 
-@dataclass
+@dataclass(frozen=True)
 class FilePattern(FileMatcher):
     """
     Represents a single gitignore pattern with its matching behavior.
