@@ -11,6 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        python-version: ['3.12', '3.13']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies and run CI
+        run: |
+          python -m pip install --upgrade pip
+          make install-test test
+
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
         python-version: ['3.12']
 
     steps:
@@ -27,7 +46,7 @@ jobs:
           make install-test test
 
   publish:
-    needs: test
+    needs: [test, test-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
