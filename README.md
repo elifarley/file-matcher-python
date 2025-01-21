@@ -203,6 +203,14 @@ factory = get_factory(MatcherImplementation.PURE_PYTHON)
 factory = get_factory(MatcherImplementation.EXTLIB_GITIGNOREFILE)
 ```
 
+## See Also
+
+- [gitignorefile](https://github.com/excitoon/gitignorefile)
+- [pathspec](https://github.com/excitoon/gitignorefile)
+- [py-gitignore](https://github.com/thehanimo/py-gitignore)
+- [Wildcard Match](https://github.com/facelessuser/wcmatch)
+
+
 ## License
 
 This project is licensed under the Apache 2 License - see the [LICENSE](LICENSE) file for details.
