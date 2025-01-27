@@ -8,7 +8,7 @@ from ..file_matcher_api import FileMatcher, FileMatchResult
 class ExtLibGitignorefileMatcherFactory(FileMatcherFactoryBase):
     """
     This factory creates matchers that delegate pattern matching to the
-    external library 'gitignorefile'.
+    external library 'gitignorefile'
     """
     def __enter__(self):
         """Context manager entry point."""
@@ -19,17 +19,18 @@ class ExtLibGitignorefileMatcherFactory(FileMatcherFactoryBase):
         pass
 
     @override
-    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+    def _new_matcher(self, deny_patterns: tuple[str, ...], allow_patterns=tuple()) -> FileMatcher:
         """
         Create a new matcher instance for the given patterns.
 
         Args:
-            patterns: A tuple of gitignore pattern strings.
+            deny_patterns: A tuple of gitignore pattern strings.
 
         Returns:
             A FileMatcher instance configured with the given patterns.
+            :param allow_patterns:
         """
-        return _ExtLibGitignorefileMatcher(patterns)
+        return _ExtLibGitignorefileMatcher(deny_patterns)
 
 
 class _ExtLibGitignorefileMatcher(FileMatcher):
