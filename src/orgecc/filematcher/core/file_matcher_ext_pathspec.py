@@ -19,17 +19,18 @@ class ExtLibPathspecMatcherFactory(FileMatcherFactoryBase):
         pass
 
     @override
-    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+    def _new_matcher(self, deny_patterns: tuple[str, ...], allow_patterns=tuple()) -> FileMatcher:
         """
         Create a new matcher instance for the given patterns.
 
         Args:
-            patterns: A tuple of gitignore pattern strings.
+            deny_patterns: A tuple of gitignore pattern strings.
 
         Returns:
             A FileMatcher instance configured with the given patterns.
+            :param allow_patterns:
         """
-        return _ExtLibPathspecMatcher(patterns)
+        return _ExtLibPathspecMatcher(deny_patterns)
 
 
 class _ExtLibPathspecMatcher(FileMatcher):

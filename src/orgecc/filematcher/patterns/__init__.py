@@ -1,8 +1,9 @@
 from importlib.resources.abc import Traversable
+from pathlib import PurePath
 from typing import Iterable
-from pathlib import Path, PurePath
-from ..file_matcher_api import DenyPatternSource
+
 from .pattern_kit import DenyPatternSourceImpl, DenyPatternSourceGroup
+from ..file_matcher_api import DenyPatternSource
 
 __all__ = ('new_deny_pattern_source', 'merge_deny_pattern_sources')
 

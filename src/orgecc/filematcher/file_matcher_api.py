@@ -35,6 +35,7 @@ The system supports:
 from typing import Protocol, Iterable
 from collections import namedtuple
 
+
 class DenyPatternSource(Iterable[str]):
     @property
     def deny_patterns(self) -> tuple[str, ...]: ...
@@ -42,12 +43,14 @@ class DenyPatternSource(Iterable[str]):
     def __iter__(self) -> Iterable[str]:
         return iter(self.deny_patterns)
 
+
 class AllowPatternSource(Iterable[str]):
     @property
     def allow_patterns(self) -> set[str]: ...
 
     def __iter__(self) -> Iterable[str]:
         return iter(self.allow_patterns)
+
 
 FileMatchResult = namedtuple('FileMatchResult', ['matches', 'description', 'by_dir'], defaults=[None, False])
 """
@@ -68,7 +71,7 @@ class FileMatcher(Protocol):
     while maintaining a consistent interface.
     """
 
-    def match(self, path: str, is_dir: bool=False) -> FileMatchResult:
+    def match(self, path: str, is_dir: bool = False) -> FileMatchResult:
         """
         Check if a given path matches the configured patterns.
 
@@ -81,6 +84,7 @@ class FileMatcher(Protocol):
         """
         ...
 
+
 class FileMatcherFactory(Protocol):
     """
     Protocol defining the interface for creating file matcher instances.
@@ -89,7 +93,11 @@ class FileMatcherFactory(Protocol):
     while maintaining a consistent way to create matcher instances.
     """
 
-    def pattern2matcher(self, deny_source: DenyPatternSource) -> FileMatcher:
+    def pattern2matcher(
+        self,
+        deny_source: DenyPatternSource,
+        allow_source: AllowPatternSource | None = None
+    ) -> FileMatcher:
         """
         Create a new matcher instance from patterns or pattern files.
 
@@ -102,4 +110,5 @@ class FileMatcherFactory(Protocol):
         ...
 
     def __enter__(self): ...
+
     def __exit__(self, exc_type, exc_val, exc_tb): ...
