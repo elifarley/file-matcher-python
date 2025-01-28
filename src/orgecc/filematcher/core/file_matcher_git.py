@@ -59,11 +59,11 @@ class GitNativeMatcherFactory(_GitContext, FileMatcherFactoryBase):
                 pass
 
     @override
-    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+    def _new_matcher(self, deny_patterns: tuple[str, ...], allow_patterns=tuple()) -> FileMatcher:
         with self._lock:
             self._instance_counter += 1
             instance_id = self._instance_counter
-        return _GitIgnoreNativeMatcher(patterns, instance_id, self)
+        return _GitIgnoreNativeMatcher(deny_patterns, instance_id, self)
 
     def cleanup_matcher(self, instance_id: int) -> None:
         if self._temp_dir:

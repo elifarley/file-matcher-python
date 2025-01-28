@@ -27,17 +27,18 @@ class PurePythonMatcherFactory(FileMatcherFactoryBase):
         pass
 
     @override
-    def _new_matcher(self, patterns: tuple[str, ...]) -> FileMatcher:
+    def _new_matcher(self, deny_patterns: tuple[str, ...], allow_patterns: tuple[str, ...] = tuple()) -> FileMatcher:
         """
         Create a new matcher instance for the given patterns.
 
         Args:
-            patterns: A tuple of gitignore pattern strings.
+            deny_patterns: A tuple of gitignore pattern strings.
 
         Returns:
             A FileMatcher instance configured with the given patterns.
+            :param allow_patterns:
         """
-        return _GitIgnorePythonMatcher(patterns)
+        return _GitIgnorePythonMatcher(deny_patterns, allow_patterns)
 
 @lru_cache(maxsize=512)
 def gitignore_syntax_2_fnmatch(
@@ -318,25 +319,38 @@ class _GitIgnorePythonMatcher(FileMatcher):
     behavior of .gitignore files.
     """
 
-    __slots__ = ('patterns', 'base_path')
+    __slots__ = ('deny_patterns', 'allow_patterns', 'base_path')
 
-    def __init__(self, patterns: tuple[str, ...], base_path: str = "."):
+    def __init__(
+        self,
+        deny_patterns: tuple[str, ...],
+        allow_patterns: tuple[str, ...] = tuple(),
+        base_path: str = "."
+    ):
         """
         Initialize GitIgnoreParser with a list of patterns.
 
         Args:
-            patterns: list of gitignore pattern strings.
+            deny_patterns: list of gitignore pattern strings.
             base_path: Base directory for relative patterns.
         """
-        self.patterns: list[FilePattern] = []
+        self.deny_patterns: list[FilePattern] = []
+        self.allow_patterns: list[FilePattern] = []
         self.base_path = Path(base_path).resolve()
 
-        for pattern_str in patterns:
+        for pattern_str in deny_patterns:
             parsed = FilePattern.from_line(pattern_str)
             # Debug: Log the result of parsing each pattern
-            logging.debug("[_parse_pattern] '%s' -> %s", pattern_str, parsed)
+            logging.debug("[_parse_pattern deny] '%s' -> %s", pattern_str, parsed)
             if parsed is not None:
-                self.patterns.append(parsed)
+                self.deny_patterns.append(parsed)
+
+        for pattern_str in allow_patterns:
+            parsed = FilePattern.from_line(pattern_str)
+            # Debug: Log the result of parsing each pattern
+            logging.debug("[_parse_pattern allow] '%s' -> %s", pattern_str, parsed)
+            if parsed is not None:
+                self.allow_patterns.append(parsed)
 
     @override
     def match(self, path: str, is_dir: bool=False) -> FileMatchResult:
@@ -355,11 +369,25 @@ class _GitIgnorePythonMatcher(FileMatcher):
 
         # Last match wins
         _match = None
-        for file_pattern in self.patterns:
+        for file_pattern in self.deny_patterns:
             result = file_pattern.match(path, path_is_dir)
             if result.matches:
                 _match = result._replace(matches=not file_pattern.is_negative)
                 if _match.matches and _match.by_dir:
                     _match = _match._replace(description=f"{_match.description} (early stop)")
                     break
-        return _match or FileMatchResult(False)
+        result_before_allow = _match or FileMatchResult(False)
+        if result_before_allow.matches or not self.allow_patterns:
+            return result_before_allow
+
+        # matches = False
+
+        _match = FileMatchResult(False)
+        for file_pattern in self.allow_patterns:
+            result = file_pattern.match(path, path_is_dir)
+            if result.matches:
+                _match = result._replace(matches=not file_pattern.is_negative)
+                if _match.matches and _match.by_dir:
+                    _match = _match._replace(description=f"{_match.description} (early stop)")
+                    break
+        return result_before_allow._replace(matches=not _match.matches)
